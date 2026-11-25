@@ -1,0 +1,1927 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f292e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Trại Pleco LF" />
+  <title>Quản Lý Trại Pleco Longfin (L144)</title>
+
+  <!-- Font Inter chuẩn hiện đại hỗ trợ tiếng Việt rõ nét -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            slateDeep: '#0b191c',
+            slateCard: '#11262b',
+            slateSurface: '#173238',
+            tealAccent: '#14b8a6',
+            tealSoft: '#0d9488',
+            amberGold: '#f59e0b',
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Tùy chỉnh thanh cuộn và tương tác chạm trên điện thoại */
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #0b191c;
+      color: #f1f5f9;
+      overscroll-behavior-y: none;
+    }
+    /* Ẩn mũi tên tăng giảm mặc định của input number nếu cần gọn */
+    input[type="number"].no-spinner::-webkit-inner-spin-button,
+    input[type="number"].no-spinner::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    /* Hiệu ứng chạm nút bấm rõ ràng */
+    .btn-press:active {
+      transform: scale(0.98);
+    }
+    /* Vùng cuộn ngang bảng mượt mà */
+    .table-scroll::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .table-scroll::-webkit-scrollbar-track {
+      background: #0d1f23;
+      border-radius: 9999px;
+    }
+    .table-scroll::-webkit-scrollbar-thumb {
+      background: #234952;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slateDeep text-slate-100 pb-24 md:pb-10">
+
+  <!-- Toast thông báo nổi thay cho alert() -->
+  <div id="toastContainer" class="fixed top-4 right-4 left-4 sm:left-auto sm:w-96 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Modal xác nhận xóa / reset dữ liệu (thay thế confirm()) -->
+  <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-xs p-4">
+    <div class="w-full max-w-md rounded-2xl bg-slateCard border border-teal-900/60 p-5 shadow-2xl">
+      <h3 id="confirmTitle" class="text-lg font-bold text-white">Xác nhận thao tác</h3>
+      <p id="confirmMessage" class="mt-2 text-sm text-slate-300 leading-relaxed"></p>
+      <div class="mt-5 flex items-center justify-end gap-3">
+        <button id="confirmCancelBtn" type="button" class="btn-press rounded-xl border border-slate-600 bg-slateSurface px-4 py-2.5 text-sm font-semibold text-slate-200 hover:bg-slate-700">
+          Hủy bỏ
+        </button>
+        <button id="confirmOkBtn" type="button" class="btn-press rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 shadow-lg shadow-rose-950/50">
+          Đồng ý
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thanh tiêu đề đầu trang -->
+  <header class="sticky top-0 z-30 border-b border-teal-900/50 bg-slateDeep/95 backdrop-blur-md">
+    <div class="mx-auto max-w-6xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <!-- Biểu tượng cá Pleco Longfin SVG gọn sắc nét -->
+        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500/25 to-emerald-700/20 border border-teal-400/30 text-teal-300">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 14c2-4 7-6 12-5l4-3v8l-4-2c-3 3-8 4-12 2z" />
+            <path d="M7 10l-2-4M10 9l-1-4M13 9l1-4" />
+            <circle cx="16.5" cy="10.5" r="0.8" fill="currentColor" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white">Trại Pleco Longfin (L144)</h1>
+            <span class="rounded-full bg-teal-500/15 border border-teal-400/30 px-2 py-0.5 text-[11px] font-semibold text-teal-300">PWA Offline</span>
+          </div>
+          <p class="text-xs text-slate-400">14 hồ giống nền • 15 hồ bán SS (1–2 lứa) • Bán cá con hết noãn</p>
+        </div>
+      </div>
+
+      <!-- Cụm nút sao lưu / khôi phục / cài đặt PWA -->
+      <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <button id="btnGuidePwa" type="button" class="btn-press flex-1 sm:flex-none rounded-xl border border-teal-700/60 bg-slateSurface px-3 py-2 text-xs font-semibold text-teal-200 hover:bg-teal-900/50">
+          Cách thêm MH chính
+        </button>
+        <button id="btnExportJson" type="button" class="btn-press flex-1 sm:flex-none rounded-xl border border-emerald-600/50 bg-emerald-950/60 px-3 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-900/60">
+          Xuất JSON
+        </button>
+        <label for="importJsonInput" class="btn-press flex-1 sm:flex-none cursor-pointer text-center rounded-xl border border-amber-500/50 bg-amber-950/50 px-3 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-900/60">
+          Nhập JSON
+        </label>
+        <input id="importJsonInput" type="file" accept=".json,application/json" class="hidden" />
+      </div>
+    </div>
+
+    <!-- Thanh điều hướng Tab cho màn hình Tablet/Desktop -->
+    <nav class="hidden md:block mx-auto max-w-6xl px-4">
+      <div class="flex gap-2 border-t border-teal-950 pt-2 pb-2" id="desktopTabs">
+        <button data-tab="breeding" class="tab-btn rounded-xl px-4 py-2.5 text-sm font-bold transition">1. Ghi đẻ</button>
+        <button data-tab="sales" class="tab-btn rounded-xl px-4 py-2.5 text-sm font-bold transition">2. Xuất bán</button>
+        <button data-tab="expenses" class="tab-btn rounded-xl px-4 py-2.5 text-sm font-bold transition">3. Chi phí</button>
+        <button data-tab="stats" class="tab-btn rounded-xl px-4 py-2.5 text-sm font-bold transition">4. Thống kê &amp; Giống</button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hướng dẫn nhanh thêm ra Màn hình chính iPhone Safari -->
+  <div id="pwaGuideBanner" class="hidden mx-auto max-w-6xl px-4 mt-4">
+    <div class="rounded-2xl border border-teal-500/40 bg-gradient-to-r from-teal-950/90 to-slateCard p-4 shadow-lg">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-sm font-bold text-teal-200">Cài đặt như App trên iPhone (Safari — Miễn phí)</h2>
+          <ol class="mt-2 space-y-1 text-xs sm:text-sm text-slate-300 list-decimal list-inside">
+            <li>Mở trang này bằng <strong>Safari</strong> trên iPhone.</li>
+            <li>Nhấn nút <strong>Chia sẻ</strong> (biểu tượng mũi tên hướng lên), cuộn xuống chọn <strong>Thêm vào MH chính</strong>.</li>
+            <li>Đặt tên <strong>Trại Pleco LF</strong> và nhấn <strong>Thêm</strong>. Dữ liệu tự lưu offline trên máy; định kỳ nhấn <strong>Xuất JSON</strong> lưu vào <strong>Tệp / iCloud Drive</strong> để dự phòng.</li>
+          </ol>
+        </div>
+        <button id="btnCloseGuide" type="button" class="rounded-lg bg-slateSurface px-2.5 py-1 text-xs font-semibold text-slate-300 hover:text-white">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nội dung chính -->
+  <main class="mx-auto max-w-6xl px-4 pt-4 space-y-5">
+
+    <!-- ===================================================================== -->
+    <!-- TAB 1: GHI ĐẺ                                                         -->
+    <!-- ===================================================================== -->
+    <section id="tab-breeding" class="tab-panel space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Form nhập liệu ghi đẻ -->
+        <div class="lg:col-span-5 rounded-2xl border border-teal-900/60 bg-slateCard p-4 sm:p-5 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base sm:text-lg font-extrabold text-white">Ghi nhận lứa đẻ mới</h2>
+            <span class="rounded-lg bg-teal-500/15 px-2.5 py-1 text-xs font-semibold text-teal-300">Cá con hết noãn</span>
+          </div>
+
+          <form id="breedingForm" class="space-y-4">
+            <!-- Phân loại -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Phân loại nhóm hồ / cặp</label>
+              <div class="grid grid-cols-2 gap-2.5">
+                <button type="button" data-category="Cặp giống chính" class="cat-choice btn-press rounded-xl border px-3 py-3 text-xs sm:text-sm font-bold text-center transition">
+                  Cặp giống chính
+                </button>
+                <button type="button" data-category="Hồ bán SS (1-2 lứa)" class="cat-choice btn-press rounded-xl border px-3 py-3 text-xs sm:text-sm font-bold text-center transition">
+                  Hồ bán SS (1-2 lứa)
+                </button>
+              </div>
+              <input type="hidden" id="breedCategory" value="Cặp giống chính" />
+            </div>
+
+            <!-- Mã cặp / Hồ số + Gợi ý nhanh -->
+            <div>
+              <label for="breedCode" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                Mã cặp / Hồ số
+              </label>
+              <input id="breedCode" type="text" required placeholder="VD: LF-01 hoặc Hồ 1" list="codeSuggestions"
+                class="w-full rounded-xl border border-teal-800/70 bg-slateSurface px-3.5 py-3 text-base font-semibold text-white placeholder-slate-500 focus:border-teal-400 focus:outline-none" />
+              <datalist id="codeSuggestions"></datalist>
+              <!-- Nút chọn nhanh mã/hồ -->
+              <div id="quickCodeChips" class="mt-2 flex flex-wrap gap-1.5"></div>
+            </div>
+
+            <!-- Preview tự động: Lần đẻ thứ mấy & Số ngày nghỉ -->
+            <div id="breedLivePreview" class="grid grid-cols-2 gap-2.5 rounded-xl border border-teal-800/50 bg-slateDeep/80 p-3">
+              <div>
+                <span class="block text-[11px] font-medium text-slate-400">Lần đẻ dự kiến</span>
+                <span id="previewOrder" class="mt-0.5 block text-base font-extrabold text-teal-300">Lần #1</span>
+              </div>
+              <div>
+                <span class="block text-[11px] font-medium text-slate-400">Ngày nghỉ từ lần trước</span>
+                <span id="previewRestDays" class="mt-0.5 block text-base font-extrabold text-amber-300">—</span>
+              </div>
+            </div>
+
+            <!-- Ngày đẻ & Số cá con -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label for="breedDate" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Ngày ghi nhận</label>
+                <input id="breedDate" type="date" required
+                  class="w-full rounded-xl border border-teal-800/70 bg-slateSurface px-3.5 py-3 text-sm font-semibold text-white focus:border-teal-400 focus:outline-none" />
+              </div>
+              <div>
+                <label for="breedFryCount" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Số cá con (hết noãn)</label>
+                <input id="breedFryCount" type="number" min="1" step="1" required placeholder="VD: 65"
+                  class="no-spinner w-full rounded-xl border border-teal-800/70 bg-slateSurface px-3.5 py-3 text-base font-bold text-emerald-300 placeholder-slate-500 focus:border-teal-400 focus:outline-none" />
+              </div>
+            </div>
+
+            <!-- Ghi chú -->
+            <div>
+              <label for="breedNote" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Ghi chú (tùy chọn)</label>
+              <input id="breedNote" type="text" placeholder="VD: Trống giữ bầy tốt, tách hết noãn..."
+                class="w-full rounded-xl border border-teal-800/70 bg-slateSurface px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-teal-400 focus:outline-none" />
+            </div>
+
+            <button type="submit" class="btn-press w-full rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-3.5 text-sm sm:text-base font-extrabold text-slate-950 shadow-lg shadow-teal-950/60 hover:from-teal-400 hover:to-emerald-400">
+              Lưu nhật ký đẻ
+            </button>
+          </form>
+        </div>
+
+        <!-- Danh sách nhật ký đẻ -->
+        <div class="lg:col-span-7 rounded-2xl border border-teal-900/60 bg-slateCard p-4 sm:p-5 shadow-xl flex flex-col">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <h2 class="text-base sm:text-lg font-extrabold text-white">Nhật ký đẻ gần đây</h2>
+              <p class="text-xs text-slate-400">Tự động đếm lần đẻ và ngày nghỉ theo từng mã/hồ</p>
+            </div>
+            <input id="breedSearch" type="text" placeholder="Lọc mã LF-01, Hồ 1..."
+              class="w-full sm:w-48 rounded-xl border border-teal-800/60 bg-slateSurface px-3 py-2 text-xs font-medium text-white placeholder-slate-400 focus:border-teal-400 focus:outline-none" />
+          </div>
+
+          <!-- Dạng thẻ hiển thị rõ trên mobile & bảng gọn trên desktop -->
+          <div id="breedingList" class="space-y-2.5 max-h-[540px] overflow-y-auto table-scroll pr-1"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 2: XUẤT BÁN                                                      -->
+    <!-- ===================================================================== -->
+    <section id="tab-sales" class="tab-panel hidden space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Form xuất bán -->
+        <div class="lg:col-span-5 rounded-2xl border border-teal-900/60 bg-slateCard p-4 sm:p-5 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base sm:text-lg font-extrabold text-white">Ghi nhận xuất bán</h2>
+            <span class="rounded-lg bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-300">Doanh thu thực</span>
+          </div>
+
+          <form id="salesForm" class="space-y-4">
+            <!-- Loại sản phẩm -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Loại sản phẩm</label>
+              <div class="grid grid-cols-2 gap-2.5">
+                <button type="button" data-product="Cá con" class="prod-choice btn-press rounded-xl border px-3 py-3 text-xs sm:text-sm font-bold transition">
+                  Cá con
+                </button>
+                <button type="button" data-product="Cá size sinh sản" class="prod-choice btn-press rounded-xl border px-3 py-3 text-xs sm:text-sm font-bold transition">
+                  Cá size sinh sản
+                </button>
+              </div>
+              <input type="hidden" id="saleProductType" value="Cá con" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label for="saleDate" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Ngày bán</label>
+                <input id="saleDate" type="date" required
+                  class="w-full rounded-xl border border-teal-800/70 bg-slateSurface px-3.5 py-3 text-sm font-semibold text-white focus:border-teal-400 focus:outline-none" />
+              </div>
+              <div>
+                <label for="saleSize" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Size / Giai đoạn</label>
+                <input id="saleSize" type="text" placeholder="VD: Hết noãn / 6-7cm"
+                  class="w-full rounded-xl border border-teal-800/70 bg-slateSurface px-3.5 py-3 text-sm font-semibold text-white placeholder-slate-500 focus:border-teal-400 focus:outline-none" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label for="saleQty" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Số lượng (con)</label>
+                <input id="saleQty" type="number" min="1" step="1" required placeholder="VD: 200"
+                  class="no-spinner w-full rounded-xl border border-teal-800/70 bg-slateSurface px-3.5 py-3 text-base font-bold text-white placeholder-slate-500 focus:border-teal-400 focus:outline-none" />
+              </div>
+              <div>
+                <label for="salePrice" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Đơn giá đợt này (VNĐ)</label>
+                <input id="salePrice" type="number" min="0" step="100" required placeholder="VD: 15000"
+                  class="no-spinner w-full rounded-xl border border-teal-800/70 bg-slateSurface px-3.5 py-3 text-base font-bold text-amber-300 placeholder-slate-500 focus:border-teal-400 focus:outline-none" />
+              </div>
+            </div>
+
+            <!-- Thành tiền tự tính -->
+            <div class="rounded-xl border border-emerald-700/40 bg-emerald-950/35 p-3.5 flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-200">Thành tiền dự tính</span>
+              <span id="saleTotalPreview" class="text-lg font-extrabold text-emerald-300">0 đ</span>
+            </div>
+
+            <div>
+              <label for="saleNote" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Khách hàng / Ghi chú</label>
+              <input id="saleNote" type="text" placeholder="VD: Khách sỉ Cần Thơ, bắt cả bầy..."
+                class="w-full rounded-xl border border-teal-800/70 bg-slateSurface px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-teal-400 focus:outline-none" />
+            </div>
+
+            <button type="submit" class="btn-press w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 px-4 py-3.5 text-sm sm:text-base font-extrabold text-slate-950 shadow-lg shadow-emerald-950/60 hover:from-emerald-400 hover:to-teal-300">
+              Lưu phiếu xuất bán
+            </button>
+          </form>
+        </div>
+
+        <!-- Lịch sử xuất bán -->
+        <div class="lg:col-span-7 rounded-2xl border border-teal-900/60 bg-slateCard p-4 sm:p-5 shadow-xl flex flex-col">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <h2 class="text-base sm:text-lg font-extrabold text-white">Lịch sử xuất bán</h2>
+              <p id="salesSummarySub" class="text-xs text-slate-400">Tổng hợp các đợt bán cá con và cá size sinh sản</p>
+            </div>
+          </div>
+          <div id="salesList" class="space-y-2.5 max-h-[540px] overflow-y-auto table-scroll pr-1"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 3: CHI PHÍ                                                        -->
+    <!-- ===================================================================== -->
+    <section id="tab-expenses" class="tab-panel hidden space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Form chi phí -->
+        <div class="lg:col-span-5 rounded-2xl border border-teal-900/60 bg-slateCard p-4 sm:p-5 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base sm:text-lg font-extrabold text-white">Ghi nhận chi phí</h2>
+            <span class="rounded-lg bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-300">6 nhóm chuẩn</span>
+          </div>
+
+          <form id="expenseForm" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label for="expenseDate" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Ngày chi</label>
+                <input id="expenseDate" type="date" required
+                  class="w-full rounded-xl border border-teal-800/70 bg-slateSurface px-3.5 py-3 text-sm font-semibold text-white focus:border-teal-400 focus:outline-none" />
+              </div>
+              <div>
+                <label for="expenseGroup" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Nhóm chi phí</label>
+                <select id="expenseGroup"
+                  class="w-full rounded-xl border border-teal-800/70 bg-slateSurface px-3 py-3 text-sm font-bold text-white focus:border-teal-400 focus:outline-none">
+                  <option value="Nhập cá giống">Nhập cá giống</option>
+                  <option value="Tiền điện">Tiền điện</option>
+                  <option value="Tiền nước">Tiền nước</option>
+                  <option value="Thức ăn" selected>Thức ăn</option>
+                  <option value="Thuốc & Vi sinh">Thuốc &amp; Vi sinh</option>
+                  <option value="Vật tư/Khác">Vật tư/Khác</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Mã cặp giống (nổi bật khi chọn Nhập cá giống) -->
+            <div id="expenseBroodstockBox" class="rounded-xl border border-teal-800/50 bg-slateDeep/60 p-3">
+              <label for="expensePairCode" class="block text-xs font-bold uppercase tracking-wider text-teal-300 mb-1.5">
+                Mã cặp giống (nếu Nhập cá giống)
+              </label>
+              <input id="expensePairCode" type="text" placeholder="VD: LF-01, LF-02..." list="pairCodeSuggestions"
+                class="w-full rounded-xl border border-teal-800/70 bg-slateSurface px-3.5 py-2.5 text-sm font-semibold text-white placeholder-slate-500 focus:border-teal-400 focus:outline-none" />
+              <datalist id="pairCodeSuggestions"></datalist>
+              <p class="mt-1 text-[11px] text-slate-400">Gắn mã LF-xx giúp tự tính khấu hao và thời gian hoàn vốn ở Tab Thống kê &amp; Giống.</p>
+            </div>
+
+            <div>
+              <label for="expenseAmount" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Số tiền (VNĐ)</label>
+              <input id="expenseAmount" type="number" min="0" step="1000" required placeholder="VD: 850000"
+                class="no-spinner w-full rounded-xl border border-teal-800/70 bg-slateSurface px-3.5 py-3 text-base font-bold text-rose-300 placeholder-slate-500 focus:border-teal-400 focus:outline-none" />
+            </div>
+
+            <div>
+              <label for="expenseDesc" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Diễn giải</label>
+              <input id="expenseDesc" type="text" placeholder="VD: Cám viên cao đạm, vi sinh xử lý hồ..."
+                class="w-full rounded-xl border border-teal-800/70 bg-slateSurface px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-teal-400 focus:outline-none" />
+            </div>
+
+            <button type="submit" class="btn-press w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-3.5 text-sm sm:text-base font-extrabold text-slate-950 shadow-lg shadow-amber-950/60 hover:from-amber-400 hover:to-orange-400">
+              Lưu khoản chi phí
+            </button>
+          </form>
+        </div>
+
+        <!-- Lịch sử chi phí -->
+        <div class="lg:col-span-7 rounded-2xl border border-teal-900/60 bg-slateCard p-4 sm:p-5 shadow-xl flex flex-col">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <h2 class="text-base sm:text-lg font-extrabold text-white">Lịch sử chi phí</h2>
+              <p class="text-xs text-slate-400">Quản lý chi phí vận hành và đầu tư nhập cá giống</p>
+            </div>
+            <select id="expenseFilterGroup"
+              class="rounded-xl border border-teal-800/60 bg-slateSurface px-3 py-2 text-xs font-semibold text-white focus:border-teal-400 focus:outline-none">
+              <option value="ALL">Tất cả nhóm chi phí</option>
+              <option value="Nhập cá giống">Nhập cá giống</option>
+              <option value="Tiền điện">Tiền điện</option>
+              <option value="Tiền nước">Tiền nước</option>
+              <option value="Thức ăn">Thức ăn</option>
+              <option value="Thuốc & Vi sinh">Thuốc &amp; Vi sinh</option>
+              <option value="Vật tư/Khác">Vật tư/Khác</option>
+            </select>
+          </div>
+          <div id="expenseList" class="space-y-2.5 max-h-[540px] overflow-y-auto table-scroll pr-1"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 4: THỐNG KÊ & GIỐNG                                             -->
+    <!-- ===================================================================== -->
+    <section id="tab-stats" class="tab-panel hidden space-y-5">
+      <!-- Thanh lọc Năm & Tháng -->
+      <div class="rounded-2xl border border-teal-900/60 bg-slateCard p-4 shadow-xl flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-base sm:text-lg font-extrabold text-white">Báo cáo hiệu quả &amp; Đánh giá giống</h2>
+          <p class="text-xs text-slate-400">Tách bạch LN Vận hành và LN Ròng dòng tiền theo kỳ chọn</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          <div class="flex-1 sm:flex-none">
+            <label for="filterYear" class="sr-only">Năm</label>
+            <select id="filterYear" class="w-full rounded-xl border border-teal-700 bg-slateSurface px-3.5 py-2.5 text-sm font-bold text-teal-300 focus:border-teal-400 focus:outline-none">
+              <option value="2025">Năm 2025</option>
+              <option value="2026" selected>Năm 2026</option>
+              <option value="2027">Năm 2027</option>
+            </select>
+          </div>
+          <div class="flex-1 sm:flex-none">
+            <label for="filterMonth" class="sr-only">Tháng</label>
+            <select id="filterMonth" class="w-full rounded-xl border border-teal-700 bg-slateSurface px-3.5 py-2.5 text-sm font-bold text-white focus:border-teal-400 focus:outline-none">
+              <option value="ALL">Cả năm</option>
+              <option value="1">Tháng 1</option>
+              <option value="2">Tháng 2</option>
+              <option value="3">Tháng 3</option>
+              <option value="4">Tháng 4</option>
+              <option value="5">Tháng 5</option>
+              <option value="6">Tháng 6</option>
+              <option value="7">Tháng 7</option>
+              <option value="8">Tháng 8</option>
+              <option value="9">Tháng 9</option>
+              <option value="10">Tháng 10</option>
+              <option value="11">Tháng 11</option>
+              <option value="12">Tháng 12</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Khối thẻ KPI tổng quan -->
+      <div id="kpiGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"></div>
+
+      <!-- Báo cáo chi tiết kỳ đang chọn (Tháng / Năm) -->
+      <div class="rounded-2xl border border-teal-900/60 bg-slateCard p-4 sm:p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-teal-900/50 pb-3">
+          <div>
+            <h3 id="reportPeriodTitle" class="text-base font-extrabold text-white">Báo cáo chi tiết Năm 2026</h3>
+            <p class="text-xs text-slate-400">Sản lượng cá con hết noãn, xuất bán bình quân gia quyền &amp; dòng tiền chi phí</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Cột 1: Sản lượng đẻ -->
+          <div class="rounded-xl border border-teal-800/50 bg-slateDeep/70 p-4 space-y-2.5">
+            <div class="text-xs font-bold uppercase tracking-wider text-teal-300">1. Sản lượng đẻ (Hết noãn)</div>
+            <div class="flex justify-between text-sm">
+              <span class="text-slate-300">Số ổ đẻ:</span>
+              <span id="repBroodCount" class="font-bold text-white">0 ổ</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-slate-300">Cá con từ Cặp giống:</span>
+              <span id="repFryMain" class="font-bold text-teal-300">0 con</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-slate-300">Cá con từ Hồ bán SS:</span>
+              <span id="repFrySs" class="font-bold text-amber-300">0 con</span>
+            </div>
+            <div class="pt-2 border-t border-slate-800 flex justify-between text-sm">
+              <span class="font-bold text-white">Tổng cá con đẻ:</span>
+              <span id="repFryTotal" class="font-extrabold text-emerald-300">0 con</span>
+            </div>
+          </div>
+
+          <!-- Cột 2: Xuất bán & Giá BQ gia quyền -->
+          <div class="rounded-xl border border-teal-800/50 bg-slateDeep/70 p-4 space-y-2.5">
+            <div class="text-xs font-bold uppercase tracking-wider text-emerald-300">2. Xuất bán &amp; Giá BQ gia quyền</div>
+            <div class="space-y-1">
+              <div class="flex justify-between text-sm">
+                <span class="text-slate-300">SL bán Cá con:</span>
+                <span id="repSoldFry" class="font-bold text-white">0 con</span>
+              </div>
+              <div class="flex justify-between text-xs text-slate-400">
+                <span>Giá BQ gia quyền Cá con:</span>
+                <span id="repAvgPriceFry" class="font-semibold text-emerald-300">0 đ</span>
+              </div>
+            </div>
+            <div class="space-y-1 pt-1 border-t border-slate-800/80">
+              <div class="flex justify-between text-sm">
+                <span class="text-slate-300">SL bán Cá size SS:</span>
+                <span id="repSoldSs" class="font-bold text-white">0 con</span>
+              </div>
+              <div class="flex justify-between text-xs text-slate-400">
+                <span>Giá BQ gia quyền Cá size SS:</span>
+                <span id="repAvgPriceSs" class="font-semibold text-teal-300">0 đ</span>
+              </div>
+            </div>
+            <div class="pt-2 border-t border-slate-800 flex justify-between text-sm">
+              <span class="font-bold text-white">Tổng doanh thu:</span>
+              <span id="repRevenue" class="font-extrabold text-emerald-300">0 đ</span>
+            </div>
+          </div>
+
+          <!-- Cột 3: Chi phí & Lợi nhuận -->
+          <div class="rounded-xl border border-teal-800/50 bg-slateDeep/70 p-4 space-y-2">
+            <div class="text-xs font-bold uppercase tracking-wider text-amber-300">3. Chi phí &amp; Lợi nhuận kỳ này</div>
+            <div class="flex justify-between text-xs sm:text-sm">
+              <span class="text-slate-300">CP Nhập cá giống:</span>
+              <span id="repCostBrood" class="font-bold text-rose-300">0 đ</span>
+            </div>
+            <div class="flex justify-between text-xs sm:text-sm">
+              <span class="text-slate-300">CP Vận hành (5 nhóm còn lại):</span>
+              <span id="repCostOp" class="font-bold text-amber-300">0 đ</span>
+            </div>
+            <div id="repCostBreakdown" class="text-[11px] text-slate-400 leading-relaxed pt-1 border-t border-slate-800/80"></div>
+            <div class="pt-2 border-t border-slate-800 space-y-1">
+              <div class="flex justify-between text-xs sm:text-sm">
+                <span class="font-semibold text-teal-200">LN Vận hành (trước giống):</span>
+                <span id="repOpProfit" class="font-extrabold text-teal-300">0 đ</span>
+              </div>
+              <div class="flex justify-between text-xs sm:text-sm">
+                <span class="font-semibold text-white">LN Ròng dòng tiền:</span>
+                <span id="repNetCashProfit" class="font-extrabold text-emerald-300">0 đ</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-400">Biên LN ròng:</span>
+                <span id="repProfitMargin" class="font-bold text-slate-200">0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bảng đánh giá từng cặp giống (mã LF) -->
+      <div class="rounded-2xl border border-teal-900/60 bg-slateCard p-4 sm:p-5 shadow-xl space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-base sm:text-lg font-extrabold text-white">Đánh giá hiệu suất từng cặp giống (Mã LF)</h3>
+            <p class="text-xs text-slate-400">
+              Tính theo lịch sử đẻ &amp; chi phí nhập giống từng mã LF; nhóm 15 hồ bán SS đẻ 1–2 lứa đã cộng thẳng vào sản lượng &amp; lợi nhuận chung ở trên.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="newPairInput" type="text" placeholder="Thêm mã LF (VD: LF-05)"
+              class="w-36 rounded-xl border border-teal-800/70 bg-slateSurface px-3 py-2 text-xs font-bold text-white placeholder-slate-500 focus:border-teal-400 focus:outline-none" />
+            <button id="btnAddPair" type="button" class="btn-press rounded-xl bg-teal-600 px-3 py-2 text-xs font-bold text-white hover:bg-teal-500">
+              + Thêm mã
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto table-scroll rounded-xl border border-teal-900/50">
+          <table class="w-full text-left border-collapse text-xs sm:text-sm whitespace-nowrap">
+            <thead class="bg-slateDeep/95 text-[11px] uppercase tracking-wider text-slate-300 border-b border-teal-900/70">
+              <tr>
+                <th class="px-3 py-3 font-bold">Mã cặp</th>
+                <th class="px-3 py-3 font-bold text-right">Vốn nhập giống</th>
+                <th class="px-3 py-3 font-bold text-right">Khấu hao/năm</th>
+                <th class="px-3 py-3 font-bold text-right">Tổng lần đẻ</th>
+                <th class="px-3 py-3 font-bold text-right">Tổng cá con</th>
+                <th class="px-3 py-3 font-bold text-right">Cá con TB/lần</th>
+                <th class="px-3 py-3 font-bold text-right">Tần suất (ngày/lần)</th>
+                <th class="px-3 py-3 font-bold text-right">Lần đẻ quy đổi/năm</th>
+                <th class="px-3 py-3 font-bold text-center">Xếp hạng</th>
+                <th class="px-3 py-3 font-bold text-right">LN lý thuyết/năm</th>
+                <th class="px-3 py-3 font-bold text-right">Tỷ suất LN</th>
+                <th class="px-3 py-3 font-bold text-right">Hoàn vốn (tháng)</th>
+              </tr>
+            </thead>
+            <tbody id="pairsEvalBody" class="divide-y divide-slate-800/80 bg-slateSurface/40"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Bảng Tham số chuẩn có thể chỉnh ngay -->
+      <div class="rounded-2xl border border-teal-900/60 bg-slateCard p-4 sm:p-5 shadow-xl space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-base sm:text-lg font-extrabold text-white">Tham số chuẩn mô hình lý thuyết</h3>
+            <p class="text-xs text-slate-400">Chỉnh sửa trực tiếp — toàn bộ xếp hạng, lợi nhuận lý thuyết và hoàn vốn tự tính lại ngay</p>
+          </div>
+          <button id="btnResetParams" type="button" class="btn-press rounded-xl border border-slate-600 bg-slateSurface px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700">
+            Khôi phục tham số mặc định
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <div class="rounded-xl border border-amber-500/30 bg-amber-950/20 p-3">
+            <label for="paramTargetFryPerBrood" class="block text-xs font-semibold text-amber-200 mb-1">Cá con chuẩn / lần đẻ (con)</label>
+            <input id="paramTargetFryPerBrood" type="number" min="1" step="1" class="param-input no-spinner w-full rounded-lg border border-amber-500/40 bg-slateDeep px-3 py-2 text-sm font-bold text-amber-300" />
+          </div>
+
+          <div class="rounded-xl border border-amber-500/30 bg-amber-950/20 p-3">
+            <label for="paramTargetCycleDays" class="block text-xs font-semibold text-amber-200 mb-1">Chu kỳ đẻ chuẩn (ngày/lần)</label>
+            <input id="paramTargetCycleDays" type="number" min="5" step="1" class="param-input no-spinner w-full rounded-lg border border-amber-500/40 bg-slateDeep px-3 py-2 text-sm font-bold text-amber-300" />
+          </div>
+
+          <div class="rounded-xl border border-amber-500/30 bg-amber-950/20 p-3">
+            <label for="paramFryPrice" class="block text-xs font-semibold text-amber-200 mb-1">Giá bán cá con kỳ vọng (đ/con)</label>
+            <input id="paramFryPrice" type="number" min="0" step="500" class="param-input no-spinner w-full rounded-lg border border-amber-500/40 bg-slateDeep px-3 py-2 text-sm font-bold text-amber-300" />
+          </div>
+
+          <div class="rounded-xl border border-amber-500/30 bg-amber-950/20 p-3">
+            <label for="paramDeprYears" class="block text-xs font-semibold text-amber-200 mb-1">Thời gian khấu hao giống (năm)</label>
+            <input id="paramDeprYears" type="number" min="0.5" max="10" step="0.5" class="param-input no-spinner w-full rounded-lg border border-amber-500/40 bg-slateDeep px-3 py-2 text-sm font-bold text-amber-300" />
+          </div>
+
+          <div class="rounded-xl border border-teal-800/50 bg-slateDeep/70 p-3">
+            <label for="paramAnnualOpCostPerPair" class="block text-xs font-semibold text-slate-300 mb-1">CP nuôi/chăm định mức/cặp/năm (đ)</label>
+            <input id="paramAnnualOpCostPerPair" type="number" min="0" step="50000" class="param-input no-spinner w-full rounded-lg border border-teal-800 bg-slateSurface px-3 py-2 text-sm font-bold text-white" />
+          </div>
+
+          <div class="rounded-xl border border-teal-800/50 bg-slateDeep/70 p-3">
+            <label for="paramDefaultPairCost" class="block text-xs font-semibold text-slate-300 mb-1">Vốn giống mặc định nếu chưa ghi chi (đ)</label>
+            <input id="paramDefaultPairCost" type="number" min="0" step="50000" class="param-input no-spinner w-full rounded-lg border border-teal-800 bg-slateSurface px-3 py-2 text-sm font-bold text-white" />
+          </div>
+
+          <div class="rounded-xl border border-teal-800/50 bg-slateDeep/70 p-3 sm:col-span-2 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-300">Reset toàn bộ dữ liệu trên thiết bị</span>
+              <button id="btnResetAllData" type="button" class="btn-press rounded-lg border border-rose-500/50 bg-rose-950/60 px-3 py-1.5 text-xs font-bold text-rose-300 hover:bg-rose-900/70">
+                Xóa sạch &amp; nạp mẫu
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Dùng khi muốn xóa dữ liệu mẫu thử nghiệm để bắt đầu nhập dữ liệu thật của trại.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Thanh điều hướng dưới cùng cố định cho iPhone / Mobile -->
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-teal-900/70 bg-slateDeep/95 backdrop-blur-lg px-2 py-1.5">
+    <div class="grid grid-cols-4 gap-1" id="mobileTabs">
+      <button data-tab="breeding" class="mob-tab-btn btn-press flex flex-col items-center justify-center rounded-xl py-2 text-[11px] font-bold transition">
+        <svg class="h-5 w-5 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>Ghi đẻ</span>
+      </button>
+      <button data-tab="sales" class="mob-tab-btn btn-press flex flex-col items-center justify-center rounded-xl py-2 text-[11px] font-bold transition">
+        <svg class="h-5 w-5 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Xuất bán</span>
+      </button>
+      <button data-tab="expenses" class="mob-tab-btn btn-press flex flex-col items-center justify-center rounded-xl py-2 text-[11px] font-bold transition">
+        <svg class="h-5 w-5 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+        </svg>
+        <span>Chi phí</span>
+      </button>
+      <button data-tab="stats" class="mob-tab-btn btn-press flex flex-col items-center justify-center rounded-xl py-2 text-[11px] font-bold transition">
+        <svg class="h-5 w-5 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <span>Thống kê</span>
+      </button>
+    </div>
+  </nav>
+
+  <script>
+    /**
+     * =========================================================================
+     * ỨNG DỤNG QUẢN LÝ TRẠI PLECO LONGFIN (L144) - PWA OFFLINE
+     * Lưu trữ dữ liệu hoàn toàn tại localStorage của trình duyệt, hỗ trợ xuất/nhập JSON.
+     * =========================================================================
+     */
+
+    const STORAGE_KEY = 'PLECO_L144_TRAI_DATA_V1';
+    const EXPENSE_GROUPS = [
+      'Nhập cá giống',
+      'Tiền điện',
+      'Tiền nước',
+      'Thức ăn',
+      'Thuốc & Vi sinh',
+      'Vật tư/Khác'
+    ];
+
+    const DEFAULT_PARAMS = {
+      targetFryPerBrood: 65,       // Cá con chuẩn / lần đẻ (hết noãn)
+      targetCycleDays: 28,         // Chu kỳ đẻ chuẩn (ngày/lần)
+      fryPrice: 15000,             // Giá bán cá con kỳ vọng (VNĐ/con)
+      deprYears: 2,                // Thời gian khấu hao giống (năm)
+      annualOpCostPerPair: 1800000,// Chi phí nuôi/chăm định mức/cặp/năm (VNĐ)
+      defaultPairCost: 1600000     // Vốn giống mặc định nếu chưa ghi chi phí nhập (VNĐ)
+    };
+
+    const INITIAL_PAIRS = ['LF-01', 'LF-02', 'LF-03', 'LF-04'];
+
+    // Dữ liệu mẫu khởi tạo lần đầu để người dùng thấy ngay cách vận hành
+    function createSampleData() {
+      const year = new Date().getFullYear() >= 2026 ? new Date().getFullYear() : 2026;
+      const mStr = String(new Date().getMonth() + 1).padStart(2, '0');
+      return {
+        activeTab: 'breeding',
+        filterYear: String(year),
+        filterMonth: 'ALL',
+        pairs: [...INITIAL_PAIRS],
+        params: { ...DEFAULT_PARAMS },
+        breedings: [
+          {
+            id: 'br-1',
+            code: 'LF-01',
+            category: 'Cặp giống chính',
+            date: `${year}-01-12`,
+            fryCount: 78,
+            note: 'Bầy đầu năm khỏe, đều size hết noãn'
+          },
+          {
+            id: 'br-2',
+            code: 'LF-01',
+            category: 'Cặp giống chính',
+            date: `${year}-02-08`,
+            fryCount: 84,
+            note: 'Nghỉ đúng 27 ngày, trống giữ ống tốt'
+          },
+          {
+            id: 'br-3',
+            code: 'LF-02',
+            category: 'Cặp giống chính',
+            date: `${year}-01-20`,
+            fryCount: 52,
+            note: 'Cá con lên đều'
+          },
+          {
+            id: 'br-4',
+            code: 'LF-03',
+            category: 'Cặp giống chính',
+            date: `${year}-02-02`,
+            fryCount: 40,
+            note: 'Đẻ hơi ít, theo dõi thêm dinh dưỡng'
+          },
+          {
+            id: 'br-5',
+            code: 'Hồ 1',
+            category: 'Hồ bán SS (1-2 lứa)',
+            date: `${year}-${mStr}-04`,
+            fryCount: 62,
+            note: 'Cặp SS lứa 1, bán cá con lúc hết noãn'
+          },
+          {
+            id: 'br-6',
+            code: 'Hồ 4',
+            category: 'Hồ bán SS (1-2 lứa)',
+            date: `${year}-${mStr}-10`,
+            fryCount: 55,
+            note: 'Chuẩn bị xuất cặp SS sau khi hết bầy con'
+          }
+        ],
+        sales: [
+          {
+            id: 'sl-1',
+            date: `${year}-02-14`,
+            productType: 'Cá con',
+            size: 'Hết noãn',
+            qty: 180,
+            price: 15000,
+            note: 'Bán bầy hết noãn đợt 1'
+          },
+          {
+            id: 'sl-2',
+            date: `${year}-${mStr}-12`,
+            productType: 'Cá size sinh sản',
+            size: '7-8cm (SS)',
+            qty: 4,
+            price: 650000,
+            note: 'Xuất bán 2 cặp SS đã đẻ xong lứa con'
+          }
+        ],
+        expenses: [
+          {
+            id: 'ex-1',
+            date: `${year}-01-05`,
+            group: 'Nhập cá giống',
+            pairCode: 'LF-01',
+            amount: 1800000,
+            desc: 'Nhập cặp giống LF-01 tuyển chọn'
+          },
+          {
+            id: 'ex-2',
+            date: `${year}-01-06`,
+            group: 'Nhập cá giống',
+            pairCode: 'LF-02',
+            amount: 1500000,
+            desc: 'Nhập cặp giống LF-02'
+          },
+          {
+            id: 'ex-3',
+            date: `${year}-01-06`,
+            group: 'Nhập cá giống',
+            pairCode: 'LF-03',
+            amount: 1400000,
+            desc: 'Nhập cặp giống LF-03'
+          },
+          {
+            id: 'ex-4',
+            date: `${year}-${mStr}-02`,
+            group: 'Thức ăn',
+            pairCode: '',
+            amount: 950000,
+            desc: 'Cám viên cao đạm & thức ăn chìm'
+          },
+          {
+            id: 'ex-5',
+            date: `${year}-${mStr}-05`,
+            group: 'Tiền điện',
+            pairCode: '',
+            amount: 720000,
+            desc: 'Điện máy sủi oxy & bơm lọc toàn trại'
+          },
+          {
+            id: 'ex-6',
+            date: `${year}-${mStr}-07`,
+            group: 'Thuốc & Vi sinh',
+            pairCode: '',
+            amount: 340000,
+            desc: 'Men vi sinh ổn định nước hồ đẻ & ươm'
+          }
+        ]
+      };
+    }
+
+    // Trạng thái ứng dụng
+    let state = loadState();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          const sample = createSampleData();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(sample));
+          return sample;
+        }
+        const parsed = JSON.parse(raw);
+        return {
+          activeTab: parsed.activeTab || 'breeding',
+          filterYear: parsed.filterYear || '2026',
+          filterMonth: parsed.filterMonth || 'ALL',
+          pairs: Array.isArray(parsed.pairs) && parsed.pairs.length ? parsed.pairs : [...INITIAL_PAIRS],
+          params: { ...DEFAULT_PARAMS, ...(parsed.params || {}) },
+          breedings: Array.isArray(parsed.breedings) ? parsed.breedings : [],
+          sales: Array.isArray(parsed.sales) ? parsed.sales : [],
+          expenses: Array.isArray(parsed.expenses) ? parsed.expenses : []
+        };
+      } catch (err) {
+        console.error('Lỗi đọc localStorage:', err);
+        showToast('Không thể đọc dữ liệu lưu trữ, dùng dữ liệu mẫu tạm thời.', 'error');
+        return createSampleData();
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (err) {
+        console.error('Lỗi ghi localStorage:', err);
+        showToast('Bộ nhớ trình duyệt đầy hoặc bị chặn lưu trữ!', 'error');
+      }
+    }
+
+    // Định dạng tiền tệ & số
+    function formatVND(num) {
+      const val = Number(num) || 0;
+      return val.toLocaleString('vi-VN') + ' đ';
+    }
+
+    function formatNumber(num) {
+      const val = Number(num) || 0;
+      return val.toLocaleString('vi-VN');
+    }
+
+    function todayISO() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function diffDaysISO(dateA, dateB) {
+      // Trả về số ngày từ dateA -> dateB (dateB >= dateA)
+      const a = new Date(dateA + 'T00:00:00');
+      const b = new Date(dateB + 'T00:00:00');
+      if (isNaN(a.getTime()) || isNaN(b.getTime())) return null;
+      return Math.round((b - a) / (1000 * 60 * 60 * 24));
+    }
+
+    function escapeHTML(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Toast thông báo đẹp thay cho alert()
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const el = document.createElement('div');
+      const colorClass = type === 'error'
+        ? 'border-rose-500/60 bg-rose-950/95 text-rose-100'
+        : type === 'warn'
+        ? 'border-amber-500/60 bg-amber-950/95 text-amber-100'
+        : 'border-teal-400/60 bg-slate-900/95 text-teal-100';
+      el.className = `pointer-events-auto rounded-xl border ${colorClass} px-4 py-3 text-xs sm:text-sm font-semibold shadow-2xl transition-all duration-300`;
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(-6px)';
+        setTimeout(() => el.remove(), 250);
+      }, 2800);
+    }
+
+    // Hộp thoại xác nhận tùy chỉnh thay cho confirm()
+    function askConfirm(title, message) {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('confirmModal');
+        const titleEl = document.getElementById('confirmTitle');
+        const msgEl = document.getElementById('confirmMessage');
+        const okBtn = document.getElementById('confirmOkBtn');
+        const cancelBtn = document.getElementById('confirmCancelBtn');
+
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        function cleanup(result) {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+          okBtn.removeEventListener('click', onOk);
+          cancelBtn.removeEventListener('click', onCancel);
+          resolve(result);
+        }
+
+        function onOk() { cleanup(true); }
+        function onCancel() { cleanup(false); }
+
+        okBtn.addEventListener('click', onOk);
+        cancelBtn.addEventListener('click', onCancel);
+      });
+    }
+
+    // Chuyển Tab
+    function setActiveTab(tabName) {
+      state.activeTab = tabName;
+      saveState();
+
+      document.querySelectorAll('.tab-panel').forEach((panel) => {
+        panel.classList.toggle('hidden', panel.id !== `tab-${tabName}`);
+      });
+
+      document.querySelectorAll('#desktopTabs .tab-btn').forEach((btn) => {
+        const active = btn.dataset.tab === tabName;
+        btn.className = active
+          ? 'tab-btn rounded-xl bg-teal-500/20 border border-teal-400/50 px-4 py-2.5 text-sm font-extrabold text-teal-200 transition'
+          : 'tab-btn rounded-xl border border-transparent px-4 py-2.5 text-sm font-bold text-slate-400 hover:text-white hover:bg-slateSurface/60 transition';
+      });
+
+      document.querySelectorAll('#mobileTabs .mob-tab-btn').forEach((btn) => {
+        const active = btn.dataset.tab === tabName;
+        btn.className = active
+          ? 'mob-tab-btn btn-press flex flex-col items-center justify-center rounded-xl bg-teal-500/20 text-teal-300 py-2 text-[11px] font-extrabold transition'
+          : 'mob-tab-btn btn-press flex flex-col items-center justify-center rounded-xl text-slate-400 hover:text-slate-200 py-2 text-[11px] font-bold transition';
+      });
+
+      if (tabName === 'stats') {
+        renderStatsTab();
+      }
+    }
+
+    /**
+     * =========================================================================
+     * TÍNH TOÁN CHỈ SỐ CHO TỪNG LẦN ĐẺ (LẦN ĐẺ THỨ MẤY & NGÀY NGHỈ)
+     * =========================================================================
+     */
+    function computeBreedingMeta(allBreedings) {
+      // Sắp xếp tăng dần theo ngày và id để đánh số lần đẻ chính xác theo thời gian
+      const sortedAsc = [...allBreedings].sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        return a.id.localeCompare(b.id);
+      });
+
+      const lastDateByCode = {};
+      const countByCode = {};
+      const metaMap = {};
+
+      for (const item of sortedAsc) {
+        const key = (item.code || '').trim().toLowerCase();
+        const order = (countByCode[key] || 0) + 1;
+        countByCode[key] = order;
+
+        let restDays = null;
+        if (lastDateByCode[key]) {
+          restDays = diffDaysISO(lastDateByCode[key], item.date);
+        }
+        lastDateByCode[key] = item.date;
+
+        metaMap[item.id] = {
+          order,
+          restDays
+        };
+      }
+      return metaMap;
+    }
+
+    function updateBreedLivePreview() {
+      const codeInput = document.getElementById('breedCode').value.trim();
+      const dateInput = document.getElementById('breedDate').value || todayISO();
+      const orderEl = document.getElementById('previewOrder');
+      const restEl = document.getElementById('previewRestDays');
+
+      if (!codeInput) {
+        orderEl.textContent = 'Lần #1';
+        restEl.textContent = '—';
+        return;
+      }
+
+      const matching = state.breedings
+        .filter((b) => (b.code || '').trim().toLowerCase() === codeInput.toLowerCase())
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      const nextOrder = matching.length + 1;
+      orderEl.textContent = `Lần #${nextOrder}`;
+
+      if (matching.length > 0) {
+        const lastItem = matching[matching.length - 1];
+        const days = diffDaysISO(lastItem.date, dateInput);
+        if (days === null || isNaN(days)) {
+          restEl.textContent = '—';
+        } else if (days >= 0) {
+          restEl.textContent = `${days} ngày (từ ${lastItem.date})`;
+        } else {
+          restEl.textContent = `Sớm hơn ${Math.abs(days)} ngày`;
+        }
+      } else {
+        restEl.textContent = 'Lứa đầu ghi nhận';
+      }
+    }
+
+    function renderCategoryButtons() {
+      const current = document.getElementById('breedCategory').value;
+      document.querySelectorAll('.cat-choice').forEach((btn) => {
+        const selected = btn.dataset.category === current;
+        btn.className = selected
+          ? 'cat-choice btn-press rounded-xl border border-teal-400 bg-teal-500/25 px-3 py-3 text-xs sm:text-sm font-extrabold text-teal-200 text-center transition'
+          : 'cat-choice btn-press rounded-xl border border-teal-800/60 bg-slateSurface px-3 py-3 text-xs sm:text-sm font-semibold text-slate-300 hover:border-teal-600 text-center transition';
+      });
+      renderQuickCodeChips();
+    }
+
+    function renderQuickCodeChips() {
+      const cat = document.getElementById('breedCategory').value;
+      const chipsWrap = document.getElementById('quickCodeChips');
+      const datalist = document.getElementById('codeSuggestions');
+      const pairDatalist = document.getElementById('pairCodeSuggestions');
+
+      const ssCodes = Array.from({ length: 15 }, (_, i) => `Hồ ${i + 1}`);
+      const allSuggestions = [...state.pairs, ...ssCodes];
+
+      datalist.innerHTML = allSuggestions.map((c) => `<option value="${escapeHTML(c)}"></option>`).join('');
+      pairDatalist.innerHTML = state.pairs.map((c) => `<option value="${escapeHTML(c)}"></option>`).join('');
+
+      const listToShow = cat === 'Cặp giống chính' ? state.pairs : ssCodes.slice(0, 8);
+      chipsWrap.innerHTML = listToShow
+        .map(
+          (code) => `<button type="button" data-quick-code="${escapeHTML(code)}" class="quick-code-btn rounded-lg border border-teal-800/70 bg-slateDeep/80 px-2.5 py-1 text-[11px] font-bold text-teal-200 hover:bg-teal-900/60">${escapeHTML(code)}</button>`
+        )
+        .join('');
+
+      chipsWrap.querySelectorAll('.quick-code-btn').forEach((b) => {
+        b.addEventListener('click', () => {
+          document.getElementById('breedCode').value = b.dataset.quickCode;
+          updateBreedLivePreview();
+        });
+      });
+    }
+
+    function renderBreedingList() {
+      const listEl = document.getElementById('breedingList');
+      const search = (document.getElementById('breedSearch').value || '').trim().toLowerCase();
+      const metaMap = computeBreedingMeta(state.breedings);
+
+      // Hiển thị mới nhất lên trên
+      const descList = [...state.breedings]
+        .sort((a, b) => {
+          if (b.date !== a.date) return b.date.localeCompare(a.date);
+          return b.id.localeCompare(a.id);
+        })
+        .filter((item) => {
+          if (!search) return true;
+          return (
+            (item.code || '').toLowerCase().includes(search) ||
+            (item.category || '').toLowerCase().includes(search) ||
+            (item.note || '').toLowerCase().includes(search)
+          );
+        });
+
+      if (!descList.length) {
+        listEl.innerHTML = `<div class="rounded-xl border border-dashed border-slate-700 p-8 text-center text-sm text-slate-400">Chưa có bản ghi nhật ký đẻ nào phù hợp.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = descList
+        .map((item) => {
+          const meta = metaMap[item.id] || { order: 1, restDays: null };
+          const isMain = item.category === 'Cặp giống chính';
+          const badgeClass = isMain
+            ? 'bg-teal-500/15 text-teal-300 border-teal-500/30'
+            : 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+          const restText = meta.restDays !== null ? `Nghỉ ${meta.restDays} ngày` : 'Lứa đầu';
+
+          return `
+            <div class="rounded-xl border border-teal-900/50 bg-slateSurface/75 p-3.5 flex items-start justify-between gap-3">
+              <div class="space-y-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-sm sm:text-base font-extrabold text-white">${escapeHTML(item.code)}</span>
+                  <span class="rounded-md border ${badgeClass} px-2 py-0.5 text-[11px] font-bold">${escapeHTML(item.category)}</span>
+                  <span class="rounded-md bg-slateDeep px-2 py-0.5 text-[11px] font-bold text-cyan-300">Lần #${meta.order}</span>
+                  <span class="rounded-md bg-slateDeep px-2 py-0.5 text-[11px] font-semibold text-slate-300">${restText}</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+                  <span>Ngày: <strong class="text-white">${escapeHTML(item.date)}</strong></span>
+                  <span>Cá con (hết noãn): <strong class="text-emerald-300 text-sm">${formatNumber(item.fryCount)} con</strong></span>
+                </div>
+                ${item.note ? `<p class="text-xs text-slate-400 truncate">${escapeHTML(item.note)}</p>` : ''}
+              </div>
+              <button type="button" data-del-breed="${item.id}" title="Xóa dòng này"
+                class="btn-press shrink-0 rounded-xl border border-rose-500/30 bg-rose-950/40 px-3 py-2 text-xs font-bold text-rose-300 hover:bg-rose-900/60">
+                Xóa
+              </button>
+            </div>
+          `;
+        })
+        .join('');
+
+      listEl.querySelectorAll('[data-del-breed]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.delBreed;
+          const ok = await askConfirm('Xóa bản ghi đẻ', 'Bạn có chắc muốn xóa lứa đẻ này khỏi nhật ký không?');
+          if (!ok) return;
+          state.breedings = state.breedings.filter((x) => x.id !== id);
+          saveState();
+          renderBreedingList();
+          updateBreedLivePreview();
+          showToast('Đã xóa bản ghi đẻ.');
+        });
+      });
+    }
+
+    /**
+     * =========================================================================
+     * TAB 2: XUẤT BÁN
+     * =========================================================================
+     */
+    function renderProductButtons() {
+      const current = document.getElementById('saleProductType').value;
+      document.querySelectorAll('.prod-choice').forEach((btn) => {
+        const selected = btn.dataset.product === current;
+        btn.className = selected
+          ? 'prod-choice btn-press rounded-xl border border-emerald-400 bg-emerald-500/25 px-3 py-3 text-xs sm:text-sm font-extrabold text-emerald-200 transition'
+          : 'prod-choice btn-press rounded-xl border border-teal-800/60 bg-slateSurface px-3 py-3 text-xs sm:text-sm font-semibold text-slate-300 hover:border-emerald-600 transition';
+      });
+    }
+
+    function updateSaleTotalPreview() {
+      const qty = Number(document.getElementById('saleQty').value) || 0;
+      const price = Number(document.getElementById('salePrice').value) || 0;
+      document.getElementById('saleTotalPreview').textContent = formatVND(qty * price);
+    }
+
+    function renderSalesList() {
+      const listEl = document.getElementById('salesList');
+      const subEl = document.getElementById('salesSummarySub');
+
+      const totalRevenue = state.sales.reduce((sum, s) => sum + (Number(s.qty) || 0) * (Number(s.price) || 0), 0);
+      subEl.textContent = `${state.sales.length} đợt xuất bán • Tổng tích lũy: ${formatVND(totalRevenue)}`;
+
+      const sorted = [...state.sales].sort((a, b) => b.date.localeCompare(a.date));
+      if (!sorted.length) {
+        listEl.innerHTML = `<div class="rounded-xl border border-dashed border-slate-700 p-8 text-center text-sm text-slate-400">Chưa có phiếu xuất bán nào.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = sorted
+        .map((s) => {
+          const total = (Number(s.qty) || 0) * (Number(s.price) || 0);
+          const isFry = s.productType === 'Cá con';
+          const tagClass = isFry
+            ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+            : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30';
+
+          return `
+            <div class="rounded-xl border border-teal-900/50 bg-slateSurface/75 p-3.5 flex items-start justify-between gap-3">
+              <div class="space-y-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="rounded-md border ${tagClass} px-2 py-0.5 text-xs font-extrabold">${escapeHTML(s.productType)}</span>
+                  ${s.size ? `<span class="text-xs font-semibold text-slate-300">Size: ${escapeHTML(s.size)}</span>` : ''}
+                  <span class="text-xs text-slate-400">• ${escapeHTML(s.date)}</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
+                  <span class="text-slate-300">SL: <strong class="text-white">${formatNumber(s.qty)} con</strong></span>
+                  <span class="text-slate-300">Đơn giá: <strong class="text-amber-300">${formatVND(s.price)}</strong></span>
+                  <span class="text-slate-300">Thành tiền: <strong class="text-emerald-300 font-extrabold">${formatVND(total)}</strong></span>
+                </div>
+                ${s.note ? `<p class="text-xs text-slate-400 truncate">${escapeHTML(s.note)}</p>` : ''}
+              </div>
+              <button type="button" data-del-sale="${s.id}" class="btn-press shrink-0 rounded-xl border border-rose-500/30 bg-rose-950/40 px-3 py-2 text-xs font-bold text-rose-300 hover:bg-rose-900/60">
+                Xóa
+              </button>
+            </div>
+          `;
+        })
+        .join('');
+
+      listEl.querySelectorAll('[data-del-sale]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.delSale;
+          const ok = await askConfirm('Xóa phiếu xuất bán', 'Bạn có chắc muốn xóa phiếu xuất bán này không?');
+          if (!ok) return;
+          state.sales = state.sales.filter((x) => x.id !== id);
+          saveState();
+          renderSalesList();
+          showToast('Đã xóa phiếu xuất bán.');
+        });
+      });
+    }
+
+    /**
+     * =========================================================================
+     * TAB 3: CHI PHÍ
+     * =========================================================================
+     */
+    function togglePairCodeHighlight() {
+      const group = document.getElementById('expenseGroup').value;
+      const box = document.getElementById('expenseBroodstockBox');
+      if (group === 'Nhập cá giống') {
+        box.className = 'rounded-xl border border-teal-400/70 bg-teal-950/40 p-3 transition';
+      } else {
+        box.className = 'rounded-xl border border-teal-800/40 bg-slateDeep/60 p-3 opacity-85 transition';
+      }
+    }
+
+    function renderExpenseList() {
+      const listEl = document.getElementById('expenseList');
+      const filterGroup = document.getElementById('expenseFilterGroup').value;
+
+      const filtered = [...state.expenses]
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .filter((e) => filterGroup === 'ALL' || e.group === filterGroup);
+
+      if (!filtered.length) {
+        listEl.innerHTML = `<div class="rounded-xl border border-dashed border-slate-700 p-8 text-center text-sm text-slate-400">Chưa có khoản chi phí nào trong nhóm này.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered
+        .map((e) => {
+          const isBrood = e.group === 'Nhập cá giống';
+          const badgeClass = isBrood
+            ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+            : 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+
+          return `
+            <div class="rounded-xl border border-teal-900/50 bg-slateSurface/75 p-3.5 flex items-start justify-between gap-3">
+              <div class="space-y-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="rounded-md border ${badgeClass} px-2 py-0.5 text-xs font-bold">${escapeHTML(e.group)}</span>
+                  ${e.pairCode ? `<span class="rounded-md bg-teal-900/70 border border-teal-500/30 px-2 py-0.5 text-xs font-extrabold text-teal-200">${escapeHTML(e.pairCode)}</span>` : ''}
+                  <span class="text-xs text-slate-400">${escapeHTML(e.date)}</span>
+                </div>
+                <div class="text-sm font-extrabold text-rose-300">${formatVND(e.amount)}</div>
+                ${e.desc ? `<p class="text-xs text-slate-300">${escapeHTML(e.desc)}</p>` : ''}
+              </div>
+              <button type="button" data-del-exp="${e.id}" class="btn-press shrink-0 rounded-xl border border-rose-500/30 bg-rose-950/40 px-3 py-2 text-xs font-bold text-rose-300 hover:bg-rose-900/60">
+                Xóa
+              </button>
+            </div>
+          `;
+        })
+        .join('');
+
+      listEl.querySelectorAll('[data-del-exp]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.delExp;
+          const ok = await askConfirm('Xóa khoản chi phí', 'Bạn có chắc muốn xóa khoản chi phí này không?');
+          if (!ok) return;
+          state.expenses = state.expenses.filter((x) => x.id !== id);
+          saveState();
+          renderExpenseList();
+          showToast('Đã xóa khoản chi phí.');
+        });
+      });
+    }
+
+    /**
+     * =========================================================================
+     * TAB 4: THỐNG KÊ & ĐÁNH GIÁ CẶP GIỐNG
+     * =========================================================================
+     */
+    function matchPeriod(dateStr, yearStr, monthStr) {
+      if (!dateStr || dateStr.length < 7) return false;
+      const [y, m] = dateStr.split('-');
+      if (y !== yearStr) return false;
+      if (monthStr !== 'ALL' && String(Number(m)) !== String(monthStr)) return false;
+      return true;
+    }
+
+    function renderStatsTab() {
+      const year = state.filterYear;
+      const month = state.filterMonth;
+
+      document.getElementById('filterYear').value = year;
+      document.getElementById('filterMonth').value = month;
+
+      const periodLabel = month === 'ALL' ? `Năm ${year}` : `Tháng ${month}/${year}`;
+      document.getElementById('reportPeriodTitle').textContent = `Báo cáo chi tiết ${periodLabel}`;
+
+      // 1. Sản lượng đẻ trong kỳ
+      const periodBreedings = state.breedings.filter((b) => matchPeriod(b.date, year, month));
+      const broodCount = periodBreedings.length;
+      let fryMain = 0;
+      let frySs = 0;
+      for (const b of periodBreedings) {
+        const cnt = Number(b.fryCount) || 0;
+        if (b.category === 'Hồ bán SS (1-2 lứa)') {
+          frySs += cnt;
+        } else {
+          fryMain += cnt;
+        }
+      }
+      const fryTotal = fryMain + frySs;
+
+      // 2. Xuất bán & Giá bình quân gia quyền trong kỳ
+      const periodSales = state.sales.filter((s) => matchPeriod(s.date, year, month));
+      let soldFryQty = 0;
+      let soldFryAmt = 0;
+      let soldSsQty = 0;
+      let soldSsAmt = 0;
+
+      for (const s of periodSales) {
+        const qty = Number(s.qty) || 0;
+        const price = Number(s.price) || 0;
+        const amt = qty * price;
+        if (s.productType === 'Cá size sinh sản') {
+          soldSsQty += qty;
+          soldSsAmt += amt;
+        } else {
+          soldFryQty += qty;
+          soldFryAmt += amt;
+        }
+      }
+
+      const avgPriceFry = soldFryQty > 0 ? soldFryAmt / soldFryQty : 0;
+      const avgPriceSs = soldSsQty > 0 ? soldSsAmt / soldSsQty : 0;
+      const totalRevenue = soldFryAmt + soldSsAmt;
+
+      // 3. Chi phí trong kỳ (tách riêng CP Nhập cá giống và 5 nhóm vận hành)
+      const periodExpenses = state.expenses.filter((e) => matchPeriod(e.date, year, month));
+      const costByGroup = {};
+      for (const g of EXPENSE_GROUPS) costByGroup[g] = 0;
+
+      for (const e of periodExpenses) {
+        const grp = EXPENSE_GROUPS.includes(e.group) ? e.group : 'Vật tư/Khác';
+        costByGroup[grp] += Number(e.amount) || 0;
+      }
+
+      const costBrood = costByGroup['Nhập cá giống'] || 0;
+      const costOp = EXPENSE_GROUPS
+        .filter((g) => g !== 'Nhập cá giống')
+        .reduce((sum, g) => sum + (costByGroup[g] || 0), 0);
+      const totalCashCost = costBrood + costOp;
+
+      // LN Vận hành (trước đầu tư giống) = Doanh thu - Chi phí vận hành
+      const opProfit = totalRevenue - costOp;
+      // LN Ròng dòng tiền = Doanh thu - Tổng chi phí (gồm cả nhập cá giống)
+      const netCashProfit = totalRevenue - totalCashCost;
+      const marginPct = totalRevenue > 0 ? (netCashProfit / totalRevenue) * 100 : 0;
+
+      // Cập nhật 4 thẻ KPI
+      document.getElementById('kpiGrid').innerHTML = `
+        <div class="rounded-2xl border border-teal-800/60 bg-slateCard p-4 shadow-lg">
+          <div class="text-xs font-semibold text-slate-400">Tổng cá con đẻ (${periodLabel})</div>
+          <div class="mt-1 text-xl sm:text-2xl font-extrabold text-emerald-300">${formatNumber(fryTotal)} con</div>
+          <div class="mt-1 text-[11px] text-slate-400">${broodCount} ổ • Giống: ${formatNumber(fryMain)} | SS bán: ${formatNumber(frySs)}</div>
+        </div>
+        <div class="rounded-2xl border border-teal-800/60 bg-slateCard p-4 shadow-lg">
+          <div class="text-xs font-semibold text-slate-400">Tổng doanh thu (${periodLabel})</div>
+          <div class="mt-1 text-xl sm:text-2xl font-extrabold text-white">${formatVND(totalRevenue)}</div>
+          <div class="mt-1 text-[11px] text-slate-400">Cá con: ${formatNumber(soldFryQty)} • Size SS: ${formatNumber(soldSsQty)}</div>
+        </div>
+        <div class="rounded-2xl border border-teal-800/60 bg-slateCard p-4 shadow-lg">
+          <div class="text-xs font-semibold text-slate-400">LN Vận hành (trước giống)</div>
+          <div class="mt-1 text-xl sm:text-2xl font-extrabold ${opProfit >= 0 ? 'text-teal-300' : 'text-rose-400'}">${formatVND(opProfit)}</div>
+          <div class="mt-1 text-[11px] text-slate-400">CP vận hành: ${formatVND(costOp)}</div>
+        </div>
+        <div class="rounded-2xl border border-teal-800/60 bg-slateCard p-4 shadow-lg">
+          <div class="text-xs font-semibold text-slate-400">LN Ròng dòng tiền</div>
+          <div class="mt-1 text-xl sm:text-2xl font-extrabold ${netCashProfit >= 0 ? 'text-emerald-300' : 'text-rose-400'}">${formatVND(netCashProfit)}</div>
+          <div class="mt-1 text-[11px] text-slate-400">CP giống: ${formatVND(costBrood)} • Biên: ${marginPct.toFixed(1)}%</div>
+        </div>
+      `;
+
+      // Cập nhật khối báo cáo chi tiết
+      document.getElementById('repBroodCount').textContent = `${formatNumber(broodCount)} ổ`;
+      document.getElementById('repFryMain').textContent = `${formatNumber(fryMain)} con`;
+      document.getElementById('repFrySs').textContent = `${formatNumber(frySs)} con`;
+      document.getElementById('repFryTotal').textContent = `${formatNumber(fryTotal)} con`;
+
+      document.getElementById('repSoldFry').textContent = `${formatNumber(soldFryQty)} con`;
+      document.getElementById('repAvgPriceFry').textContent = soldFryQty > 0 ? `${Math.round(avgPriceFry).toLocaleString('vi-VN')} đ/con` : '—';
+      document.getElementById('repSoldSs').textContent = `${formatNumber(soldSsQty)} con`;
+      document.getElementById('repAvgPriceSs').textContent = soldSsQty > 0 ? `${Math.round(avgPriceSs).toLocaleString('vi-VN')} đ/con` : '—';
+      document.getElementById('repRevenue').textContent = formatVND(totalRevenue);
+
+      document.getElementById('repCostBrood').textContent = formatVND(costBrood);
+      document.getElementById('repCostOp').textContent = formatVND(costOp);
+      document.getElementById('repCostBreakdown').innerHTML = EXPENSE_GROUPS
+        .filter((g) => g !== 'Nhập cá giống')
+        .map((g) => `<span class="inline-block mr-2.5">${g}: <strong class="text-slate-200">${formatNumber(costByGroup[g])}</strong></span>`)
+        .join('');
+
+      const opProfitEl = document.getElementById('repOpProfit');
+      opProfitEl.textContent = formatVND(opProfit);
+      opProfitEl.className = `font-extrabold ${opProfit >= 0 ? 'text-teal-300' : 'text-rose-400'}`;
+
+      const netProfitEl = document.getElementById('repNetCashProfit');
+      netProfitEl.textContent = formatVND(netCashProfit);
+      netProfitEl.className = `font-extrabold ${netCashProfit >= 0 ? 'text-emerald-300' : 'text-rose-400'}`;
+
+      document.getElementById('repProfitMargin').textContent = `${marginPct.toFixed(1)}%`;
+
+      // Render bảng đánh giá từng cặp giống (mã LF) và form tham số
+      renderParamsInputs();
+      renderPairsEvaluationTable();
+    }
+
+    function renderParamsInputs() {
+      const p = state.params;
+      document.getElementById('paramTargetFryPerBrood').value = p.targetFryPerBrood;
+      document.getElementById('paramTargetCycleDays').value = p.targetCycleDays;
+      document.getElementById('paramFryPrice').value = p.fryPrice;
+      document.getElementById('paramDeprYears').value = p.deprYears;
+      document.getElementById('paramAnnualOpCostPerPair').value = p.annualOpCostPerPair;
+      document.getElementById('paramDefaultPairCost').value = p.defaultPairCost;
+    }
+
+    function renderPairsEvaluationTable() {
+      const tbody = document.getElementById('pairsEvalBody');
+      const p = state.params;
+      const deprYears = Math.max(0.5, Number(p.deprYears) || 2);
+      const targetFry = Math.max(1, Number(p.targetFryPerBrood) || 65);
+      const targetCycle = Math.max(5, Number(p.targetCycleDays) || 28);
+      const fryPrice = Math.max(0, Number(p.fryPrice) || 15000);
+      const annualOpCost = Math.max(0, Number(p.annualOpCostPerPair) || 0);
+      const defaultPairCost = Math.max(0, Number(p.defaultPairCost) || 0);
+
+      // Gom các mã cặp cần hiển thị (danh sách cặp + mã LF xuất hiện trong nhật ký/chi phí)
+      const codeSet = new Set(state.pairs.map((c) => c.trim()).filter(Boolean));
+      for (const b of state.breedings) {
+        if (b.category === 'Cặp giống chính' && (b.code || '').trim()) {
+          codeSet.add(b.code.trim());
+        }
+      }
+      for (const e of state.expenses) {
+        if (e.group === 'Nhập cá giống' && (e.pairCode || '').trim()) {
+          codeSet.add(e.pairCode.trim());
+        }
+      }
+
+      const codes = Array.from(codeSet).sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+
+      if (!codes.length) {
+        tbody.innerHTML = `<tr><td colspan="12" class="px-4 py-6 text-center text-slate-400">Chưa có mã cặp giống LF nào.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = codes
+        .map((code) => {
+          const lower = code.toLowerCase();
+
+          // Vốn nhập giống của mã này (nếu có ghi chi phí Nhập cá giống gắn mã thì lấy tổng, ngược lại dùng mặc định)
+          const recordedCost = state.expenses
+            .filter((e) => e.group === 'Nhập cá giống' && (e.pairCode || '').trim().toLowerCase() === lower)
+            .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+          const investCost = recordedCost > 0 ? recordedCost : defaultPairCost;
+          const deprPerYear = investCost / deprYears;
+
+          // Lịch sử đẻ của mã này
+          const logs = state.breedings
+            .filter((b) => (b.code || '').trim().toLowerCase() === lower)
+            .sort((a, b) => a.date.localeCompare(b.date));
+
+          const totalBroods = logs.length;
+          const totalFry = logs.reduce((sum, l) => sum + (Number(l.fryCount) || 0), 0);
+          const avgFryPerBrood = totalBroods > 0 ? totalFry / totalBroods : 0;
+
+          // Tần suất đẻ trung bình (ngày/lần)
+          let avgCycleDays = targetCycle;
+          let hasCycleData = false;
+          if (logs.length >= 2) {
+            let totalGap = 0;
+            let gaps = 0;
+            for (let i = 1; i < logs.length; i++) {
+              const d = diffDaysISO(logs[i - 1].date, logs[i].date);
+              if (d !== null && d > 0) {
+                totalGap += d;
+                gaps++;
+              }
+            }
+            if (gaps > 0) {
+              avgCycleDays = totalGap / gaps;
+              hasCycleData = true;
+            }
+          }
+
+          const annualBroodsEst = avgCycleDays > 0 ? 365 / avgCycleDays : 0;
+          const annualFryEst = totalBroods > 0 ? avgFryPerBrood * annualBroodsEst : 0;
+          const annualRevenueEst = annualFryEst * fryPrice;
+          const annualTotalCostEst = annualOpCost + deprPerYear;
+          const annualProfitEst = annualRevenueEst - annualTotalCostEst;
+          const profitMarginEst = annualRevenueEst > 0 ? (annualProfitEst / annualRevenueEst) * 100 : 0;
+
+          // Lợi nhuận ròng hàng tháng lý thuyết để tính hoàn vốn
+          const monthlyNetEst = annualProfitEst / 12;
+          const paybackMonths =
+            investCost <= 0
+              ? 0
+              : monthlyNetEst > 0
+              ? Math.ceil((investCost / monthlyNetEst) * 10) / 10
+              : null;
+
+          // Xếp hạng hiệu suất
+          let rankLabel = 'Chờ dữ liệu';
+          let rankClass = 'bg-slate-700/70 text-slate-300 border-slate-600';
+          if (totalBroods > 0) {
+            const fryRatio = avgFryPerBrood / targetFry;
+            const cycleGood = avgCycleDays <= targetCycle * 1.1;
+            if (fryRatio >= 1.05 && cycleGood) {
+              rankLabel = 'Xuất sắc';
+              rankClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+            } else if (fryRatio >= 0.75 && avgCycleDays <= targetCycle * 1.35) {
+              rankLabel = 'Đạt chuẩn';
+              rankClass = 'bg-teal-500/20 text-teal-300 border-teal-500/40';
+            } else {
+              rankLabel = 'Kém / Cần lọc';
+              rankClass = 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+            }
+          }
+
+          return `
+            <tr class="hover:bg-slateDeep/50 transition">
+              <td class="px-3 py-2.5 font-extrabold text-white">${escapeHTML(code)}</td>
+              <td class="px-3 py-2.5 text-right text-slate-200">${formatNumber(investCost)}</td>
+              <td class="px-3 py-2.5 text-right text-amber-300">${formatNumber(Math.round(deprPerYear))}</td>
+              <td class="px-3 py-2.5 text-right font-bold text-white">${totalBroods}</td>
+              <td class="px-3 py-2.5 text-right font-bold text-emerald-300">${formatNumber(totalFry)}</td>
+              <td class="px-3 py-2.5 text-right text-slate-200">${totalBroods > 0 ? avgFryPerBrood.toFixed(1) : '—'}</td>
+              <td class="px-3 py-2.5 text-right text-slate-200">${hasCycleData ? avgCycleDays.toFixed(1) : `${targetCycle} (chuẩn)`}</td>
+              <td class="px-3 py-2.5 text-right text-cyan-300">${totalBroods > 0 ? annualBroodsEst.toFixed(1) : '0.0'}</td>
+              <td class="px-3 py-2.5 text-center">
+                <span class="inline-block rounded-full border ${rankClass} px-2.5 py-0.5 text-[11px] font-bold">${rankLabel}</span>
+              </td>
+              <td class="px-3 py-2.5 text-right font-extrabold ${annualProfitEst >= 0 ? 'text-emerald-300' : 'text-rose-400'}">${formatNumber(Math.round(annualProfitEst))}</td>
+              <td class="px-3 py-2.5 text-right font-bold ${profitMarginEst >= 0 ? 'text-teal-300' : 'text-rose-400'}">${totalBroods > 0 ? `${profitMarginEst.toFixed(1)}%` : '—'}</td>
+              <td class="px-3 py-2.5 text-right font-bold text-amber-300">${paybackMonths === null ? 'Chưa hoàn vốn' : `${paybackMonths} th`}</td>
+            </tr>
+          `;
+        })
+        .join('');
+    }
+
+    /**
+     * =========================================================================
+     * SAO LƯU & KHÔI PHỤC DỮ LIỆU JSON
+     * =========================================================================
+     */
+    function exportDataJson() {
+      try {
+        const payload = {
+          app: 'TraiPlecoLongfinL144',
+          exportedAt: new Date().toISOString(),
+          data: state
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const stamp = todayISO().replace(/-/g, '');
+        a.href = url;
+        a.download = `sao-luu-trai-pleco-lf-${stamp}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast('Đã xuất file sao lưu JSON. Hãy lưu vào Tệp / iCloud Drive.');
+      } catch (err) {
+        console.error('Lỗi xuất JSON:', err);
+        showToast('Không thể xuất file JSON trên thiết bị này.', 'error');
+      }
+    }
+
+    function importDataJson(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          const incoming = parsed && parsed.data ? parsed.data : parsed;
+          if (!incoming || !Array.isArray(incoming.breedings) || !Array.isArray(incoming.sales) || !Array.isArray(incoming.expenses)) {
+            showToast('File JSON không đúng định dạng dữ liệu trại Pleco LF.', 'error');
+            return;
+          }
+          const ok = await askConfirm(
+            'Khôi phục dữ liệu từ JSON',
+            `Ghi đè dữ liệu hiện tại bằng file sao lưu (${incoming.breedings.length} lần đẻ, ${incoming.sales.length} đợt bán, ${incoming.expenses.length} khoản chi)?`
+          );
+          if (!ok) return;
+
+          state = {
+            activeTab: state.activeTab,
+            filterYear: incoming.filterYear || '2026',
+            filterMonth: incoming.filterMonth || 'ALL',
+            pairs: Array.isArray(incoming.pairs) && incoming.pairs.length ? incoming.pairs : [...INITIAL_PAIRS],
+            params: { ...DEFAULT_PARAMS, ...(incoming.params || {}) },
+            breedings: incoming.breedings,
+            sales: incoming.sales,
+            expenses: incoming.expenses
+          };
+          saveState();
+          renderAll();
+          showToast('Đã khôi phục dữ liệu thành công!');
+        } catch (err) {
+          console.error('Lỗi đọc file JSON:', err);
+          showToast('File JSON bị lỗi hoặc không đọc được.', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function renderAll() {
+      renderCategoryButtons();
+      renderProductButtons();
+      togglePairCodeHighlight();
+      updateBreedLivePreview();
+      updateSaleTotalPreview();
+      renderBreedingList();
+      renderSalesList();
+      renderExpenseList();
+      setActiveTab(state.activeTab);
+    }
+
+    /**
+     * =========================================================================
+     * ĐĂNG KÝ SỰ KIỆN KHỞI TẠO
+     * =========================================================================
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+      const today = todayISO();
+      document.getElementById('breedDate').value = today;
+      document.getElementById('saleDate').value = today;
+      document.getElementById('expenseDate').value = today;
+
+      // Chuyển tab desktop & mobile
+      document.querySelectorAll('#desktopTabs .tab-btn, #mobileTabs .mob-tab-btn').forEach((btn) => {
+        btn.addEventListener('click', () => setActiveTab(btn.dataset.tab));
+      });
+
+      // Banner hướng dẫn PWA trên iPhone
+      document.getElementById('btnGuidePwa').addEventListener('click', () => {
+        document.getElementById('pwaGuideBanner').classList.toggle('hidden');
+      });
+      document.getElementById('btnCloseGuide').addEventListener('click', () => {
+        document.getElementById('pwaGuideBanner').classList.add('hidden');
+      });
+
+      // Xuất / Nhập JSON
+      document.getElementById('btnExportJson').addEventListener('click', exportDataJson);
+      document.getElementById('importJsonInput').addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (f) importDataJson(f);
+        e.target.value = '';
+      });
+
+      // Tab 1: Ghi đẻ
+      document.querySelectorAll('.cat-choice').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.getElementById('breedCategory').value = btn.dataset.category;
+          renderCategoryButtons();
+        });
+      });
+
+      document.getElementById('breedCode').addEventListener('input', updateBreedLivePreview);
+      document.getElementById('breedDate').addEventListener('change', updateBreedLivePreview);
+      document.getElementById('breedSearch').addEventListener('input', renderBreedingList);
+
+      document.getElementById('breedingForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const code = document.getElementById('breedCode').value.trim();
+        const category = document.getElementById('breedCategory').value;
+        const date = document.getElementById('breedDate').value;
+        const fryCount = Number(document.getElementById('breedFryCount').value);
+        const note = document.getElementById('breedNote').value.trim();
+
+        if (!code || !date || isNaN(fryCount) || fryCount <= 0) {
+          showToast('Vui lòng nhập đầy đủ Mã cặp/Hồ, Ngày và Số cá con > 0.', 'warn');
+          return;
+        }
+
+        const newRecord = {
+          id: 'br-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+          code,
+          category,
+          date,
+          fryCount: Math.round(fryCount),
+          note
+        };
+
+        state.breedings.push(newRecord);
+
+        // Nếu là mã LF-xx mới thì tự bổ sung vào danh sách cặp giống để theo dõi
+        if (category === 'Cặp giống chính' && /^lf[-_ ]?\d+/i.test(code)) {
+          const normalized = code.toUpperCase().replace(/\s+/g, '');
+          if (!state.pairs.some((p) => p.toLowerCase() === code.toLowerCase())) {
+            state.pairs.push(code);
+          }
+        }
+
+        saveState();
+        document.getElementById('breedFryCount').value = '';
+        document.getElementById('breedNote').value = '';
+        renderCategoryButtons();
+        renderBreedingList();
+        updateBreedLivePreview();
+        showToast(`Đã lưu lứa đẻ ${code} (${formatNumber(newRecord.fryCount)} cá con).`);
+      });
+
+      // Tab 2: Xuất bán
+      document.querySelectorAll('.prod-choice').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.getElementById('saleProductType').value = btn.dataset.product;
+          renderProductButtons();
+        });
+      });
+
+      document.getElementById('saleQty').addEventListener('input', updateSaleTotalPreview);
+      document.getElementById('salePrice').addEventListener('input', updateSaleTotalPreview);
+
+      document.getElementById('salesForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const productType = document.getElementById('saleProductType').value;
+        const date = document.getElementById('saleDate').value;
+        const size = document.getElementById('saleSize').value.trim();
+        const qty = Number(document.getElementById('saleQty').value);
+        const price = Number(document.getElementById('salePrice').value);
+        const note = document.getElementById('saleNote').value.trim();
+
+        if (!date || isNaN(qty) || qty <= 0 || isNaN(price) || price < 0) {
+          showToast('Vui lòng nhập Số lượng > 0 và Đơn giá hợp lệ.', 'warn');
+          return;
+        }
+
+        state.sales.push({
+          id: 'sl-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+          date,
+          productType,
+          size,
+          qty: Math.round(qty),
+          price,
+          note
+        });
+
+        saveState();
+        document.getElementById('saleQty').value = '';
+        document.getElementById('salePrice').value = '';
+        document.getElementById('saleSize').value = '';
+        document.getElementById('saleNote').value = '';
+        updateSaleTotalPreview();
+        renderSalesList();
+        showToast(`Đã lưu xuất bán ${formatNumber(Math.round(qty))} ${productType.toLowerCase()}.`);
+      });
+
+      // Tab 3: Chi phí
+      document.getElementById('expenseGroup').addEventListener('change', togglePairCodeHighlight);
+      document.getElementById('expenseFilterGroup').addEventListener('change', renderExpenseList);
+
+      document.getElementById('expenseForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const date = document.getElementById('expenseDate').value;
+        const group = document.getElementById('expenseGroup').value;
+        const pairCode = document.getElementById('expensePairCode').value.trim();
+        const amount = Number(document.getElementById('expenseAmount').value);
+        const desc = document.getElementById('expenseDesc').value.trim();
+
+        if (!date || isNaN(amount) || amount < 0) {
+          showToast('Vui lòng nhập ngày và số tiền chi phí hợp lệ.', 'warn');
+          return;
+        }
+
+        state.expenses.push({
+          id: 'ex-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+          date,
+          group,
+          pairCode: group === 'Nhập cá giống' ? pairCode : pairCode,
+          amount,
+          desc
+        });
+
+        if (pairCode && !state.pairs.some((p) => p.toLowerCase() === pairCode.toLowerCase())) {
+          state.pairs.push(pairCode);
+        }
+
+        saveState();
+        document.getElementById('expenseAmount').value = '';
+        document.getElementById('expenseDesc').value = '';
+        renderQuickCodeChips();
+        renderExpenseList();
+        showToast(`Đã lưu chi phí ${group}: ${formatVND(amount)}.`);
+      });
+
+      // Tab 4: Thống kê & Giống
+      document.getElementById('filterYear').addEventListener('change', (e) => {
+        state.filterYear = e.target.value;
+        saveState();
+        renderStatsTab();
+      });
+
+      document.getElementById('filterMonth').addEventListener('change', (e) => {
+        state.filterMonth = e.target.value;
+        saveState();
+        renderStatsTab();
+      });
+
+      document.getElementById('btnAddPair').addEventListener('click', () => {
+        const inp = document.getElementById('newPairInput');
+        const code = inp.value.trim();
+        if (!code) return;
+        if (state.pairs.some((p) => p.toLowerCase() === code.toLowerCase())) {
+          showToast(`Mã ${code} đã có trong danh sách.`, 'warn');
+          return;
+        }
+        state.pairs.push(code);
+        inp.value = '';
+        saveState();
+        renderQuickCodeChips();
+        renderPairsEvaluationTable();
+        showToast(`Đã thêm mã cặp giống ${code}.`);
+      });
+
+      // Cập nhật tham số chuẩn trực tiếp
+      const paramMap = [
+        ['paramTargetFryPerBrood', 'targetFryPerBrood'],
+        ['paramTargetCycleDays', 'targetCycleDays'],
+        ['paramFryPrice', 'fryPrice'],
+        ['paramDeprYears', 'deprYears'],
+        ['paramAnnualOpCostPerPair', 'annualOpCostPerPair'],
+        ['paramDefaultPairCost', 'defaultPairCost']
+      ];
+
+      paramMap.forEach(([elId, key]) => {
+        document.getElementById(elId).addEventListener('input', (e) => {
+          const val = Number(e.target.value);
+          if (!isNaN(val) && val >= 0) {
+            state.params[key] = val;
+            saveState();
+            renderPairsEvaluationTable();
+          }
+        });
+      });
+
+      document.getElementById('btnResetParams').addEventListener('click', async () => {
+        const ok = await askConfirm('Khôi phục tham số mặc định', 'Đưa toàn bộ tham số chuẩn về giá trị mặc định ban đầu?');
+        if (!ok) return;
+        state.params = { ...DEFAULT_PARAMS };
+        saveState();
+        renderStatsTab();
+        showToast('Đã khôi phục tham số mặc định.');
+      });
+
+      document.getElementById('btnResetAllData').addEventListener('click', async () => {
+        const ok = await askConfirm(
+          'Xóa sạch & nạp dữ liệu mẫu',
+          'Toàn bộ dữ liệu hiện tại trên trình duyệt sẽ được thay bằng bộ dữ liệu mẫu khởi tạo. Hãy xuất JSON trước nếu bạn cần giữ dữ liệu cũ.'
+        );
+        if (!ok) return;
+        const fresh = createSampleData();
+        fresh.activeTab = 'stats';
+        state = fresh;
+        saveState();
+        renderAll();
+        showToast('Đã nạp lại dữ liệu mẫu.');
+      });
+
+      // Khởi tạo hiển thị lần đầu
+      renderAll();
+    });
+  </script>
+</body>
+</html>
